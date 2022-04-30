@@ -4,7 +4,8 @@ import smtplib
 import os
 from dotenv import load_dotenv
 from email.message import EmailMessage
-import GithubAutoRepo
+import time
+from datetime import datetime
 
 flipkart_price=0
 amazon_price=0
@@ -16,33 +17,42 @@ PORT_NUMBER = os.environ.get("PORT_NUMBER")
 RECEIVER_EMAIL = os.environ.get("RECEIVER_EMAIL")
 URL_FLIPKART = os.environ.get("URL_FLIPKART")
 URL_AMAZON = os.environ.get("URL_AMAZON")
-GITHUB_USERNAME = os.environ.get("GITHUB_USERNAME")
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-REPO_PATH = os.getcwd()
+user_agent = {"User-Agent" : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36'}
 
-GithubAutoRepo.autoRepo(REPO_PATH,GITHUB_TOKEN,GITHUB_USERNAME)
 
 def flipkart():
-    r = requests.get(URL_FLIPKART)
-    htmlContent = r.content
+    req = requests.get(URL_FLIPKART, headers=user_agent)
+    htmlContent = req.content
     soup = BeautifulSoup(htmlContent, 'html.parser')
-    flipkart_price = str(soup.find_all("div", class_="_30jeq3 _16Jk6d")).replace('[<div class="_30jeq3 _16Jk6d">','').replace('</div>]','')
-    print(flipkart_price)
+    new_flipkart_price = (soup.find("div", class_="_30jeq3 _16Jk6d")).get_text()
+    if(flipkart_price==0):
+        flipkart_price=new_flipkart_price
+    elif(flipkart_price!=new_flipkart_price):
+        content=("Hey Subham, \n Price has been changed in Flipkart \n OLD PRICE = {} \n NEW PRICE = {} ".format(flipkart_price,new_flipkart_price))
+        send_email(content)
+        flipkart_price=new_flipkart_price
 
 def amazon():
-    r = requests.get(URL_AMAZON)
-    htmlContent = r.content
+    req = requests.get(URL_AMAZON, headers=user_agent)
+    htmlContent = req.content
     soup = BeautifulSoup(htmlContent, 'html.parser')
-    amazon_price = (soup.find_all("span", class_="a-offscreen"))
-    print(amazon_price)
+    new_amazon_price = (soup.find("span", class_="a-offscreen")).get_text()
 
-def send_email():
+    if(amazon_price==0):
+        amazon_price=new_amazon_price
+
+    elif(amazon_price!=new_amazon_price):
+        content=("Hey Subham, \n Price has been changed in Amazon \n OLD PRICE = {} \n NEW PRICE = {} ".format(amazon_price,new_amazon_price))
+        send_email(content)
+        amazon_price=new_amazon_price
+
+def send_email(content):
     server=smtplib.SMTP('smtp.gmail.com',PORT_NUMBER)
     msg = EmailMessage()
-    msg.set_content(check)
+    msg.set_content(content)
     msg['Subject'] = 'PRICE CHANGED'
     msg['From'] = SENDER_EMAIL
-    msg['To'] =RECEIVER_EMAIL
+    msg['To'] = RECEIVER_EMAIL
 
     server.starttls()
     try:
@@ -62,5 +72,9 @@ def send_email():
 
 
 if __name__=="__main__":
-    flipkart()
-    amazon()
+    while True:
+        now = datetime.now()
+        time = now.strftime("%I:%M")
+        if(time=="12:00" or time=="06:00"):
+            flipkart()
+            amazon()
