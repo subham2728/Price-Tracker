@@ -75,6 +75,7 @@ def send_email(content):
 
 
 if __name__=="__main__":
+    print("Welcome to Price Tracker")
     while True:
         now = datetime.now()
         time = now.strftime("%I:%M")
