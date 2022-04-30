@@ -32,6 +32,8 @@ def flipkart():
             f = open('flipkart_price.txt',"r+")
             f.write(str(new_flipkart_price))
             f.close()
+        else:
+            print("Same price")
     else:
         print(type(new_flipkart_price),new_flipkart_price)
         f = open('flipkart_price.txt', 'w')
@@ -57,8 +59,9 @@ def amazon():
                 f = open('amazon_price.txt',"r+")
                 f.write(str(new_amazon_price))
                 f.close()
+            else:
+                print("Same price")
         else:
-            print(type(new_flipkart_price),new_flipkart_price)
             f = open('amazon_price.txt', 'w')
             f.write(str(new_flipkart_price))
             f.close()
