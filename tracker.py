@@ -1,84 +1,75 @@
 import requests
 from bs4 import BeautifulSoup
-import smtplib
-import os
 from dotenv import load_dotenv
-from email.message import EmailMessage
 import time
+import os
 from datetime import datetime
-
-flipkart_price=0
-amazon_price=0
+from dhooks import Webhook
 
 load_dotenv()
-SENDER_EMAIL = os.environ.get("SENDER_EMAIL")
-PASSWORD = os.environ.get("PASSWORD")
-PORT_NUMBER = os.environ.get("PORT_NUMBER")
-RECEIVER_EMAIL = os.environ.get("RECEIVER_EMAIL")
 URL_FLIPKART = os.environ.get("URL_FLIPKART")
 URL_AMAZON = os.environ.get("URL_AMAZON")
-user_agent = {"User-Agent" : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36'}
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
+hook = Webhook(WEBHOOK_URL)
 
+user_agent = {"User-Agent" : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36'}
 
 def flipkart():
     req = requests.get(URL_FLIPKART, headers=user_agent)
     htmlContent = req.content
     soup = BeautifulSoup(htmlContent, 'html.parser')
-    new_flipkart_price = (soup.find("div", class_="_30jeq3 _16Jk6d")).get_text()
-    print("Old Flipkart Price : ",flipkart_price)
-    print("New Flipkart Price = ",new_flipkart_price)
-    if(flipkart_price==0):
-        flipkart_price=new_flipkart_price
-    elif(flipkart_price!=new_flipkart_price):
-        content=("Hey Subham, \n Price has been changed in Flipkart \n OLD PRICE = {} \n NEW PRICE = {} ".format(flipkart_price,new_flipkart_price))
-        send_email(content)
-        flipkart_price=new_flipkart_price
+    new_flipkart_price = (soup.find("div", class_="_30jeq3 _16Jk6d")).get_text().replace("₹","INR. ")
+    if os.path.exists('flipkart_price.txt'):
+        print("Exists")
+        f = open('flipkart_price.txt',"r+")
+        old_price = f.read()
+        f.close()
+        if(old_price!=new_flipkart_price):
+            print("Old Flipkart Price : ",old_price)
+            print("New Flipkart Price = ",new_flipkart_price)
+            content=("**Hey Subham**, \n**Price has been changed in Flipkart** \n_OLD PRICE_ = {} \n_NEW PRICE_ = {} ".format(old_price,new_flipkart_price))
+            hook.send(content)
+            f = open('flipkart_price.txt',"r+")
+            f.write(str(new_flipkart_price))
+            f.close()
+    else:
+        print(type(new_flipkart_price),new_flipkart_price)
+        f = open('flipkart_price.txt', 'w')
+        f.write(str(new_flipkart_price))
+        f.close()
 
 def amazon():
     req = requests.get(URL_AMAZON, headers=user_agent)
     htmlContent = req.content
-    soup = BeautifulSoup(htmlContent, 'html.parser')
-    new_amazon_price = (soup.find("span", class_="a-offscreen")).get_text()
-    print("Old Amazon Price = ",amazon_price)
-    print("New Amazon Price = ",new_amazon_price)
-    if(amazon_price==0):
-        amazon_price=new_amazon_price
-
-    elif(amazon_price!=new_amazon_price):
-        content=("Hey Subham, \n Price has been changed in Amazon \n OLD PRICE = {} \n NEW PRICE = {} ".format(amazon_price,new_amazon_price))
-        send_email(content)
-        amazon_price=new_amazon_price
-
-def send_email(content):
-    server=smtplib.SMTP('smtp.gmail.com',PORT_NUMBER)
-    msg = EmailMessage()
-    msg.set_content(content)
-    msg['Subject'] = 'PRICE CHANGED'
-    msg['From'] = SENDER_EMAIL
-    msg['To'] = RECEIVER_EMAIL
-
-    server.starttls()
     try:
-        server.login(SENDER_EMAIL,PASSWORD)
-        print("Login success")
-
-        try:
-          server.send_message(msg)
-          print("Mail sent")
-          time.sleep(1)
-          print("Mail sent to : \n",RECEIVER_EMAIL)
-          server.quit()
-        except:
-          print("Failed to sent")
+        soup = BeautifulSoup(htmlContent, 'html.parser')
+        new_amazon_price = (soup.find("span", class_="a-offscreen")).get_text().replace("₹","INR. ")
+        if os.path.exists('amazon_price.txt'):
+            print("Exists")
+            f = open('amazon_price.txt',"r+")
+            old_price = f.read()
+            f.close()
+            if(old_price!=new_amazon_price):
+                print("Old Amazon Price : ",old_price)
+                print("New Amazon Price = ",new_amazon_price)
+                content=("**Hey Subham**, \n**Price has been changed in Amazon** \n_OLD PRICE_ = {} \n_NEW PRICE_ = {} ".format(old_price,new_amazon_price))
+                hook.send(content)
+                f = open('amazon_price.txt',"r+")
+                f.write(str(new_amazon_price))
+                f.close()
+        else:
+            print(type(new_flipkart_price),new_flipkart_price)
+            f = open('amazon_price.txt', 'w')
+            f.write(str(new_flipkart_price))
+            f.close()
     except:
-        print("Login Fail")
-
+        print("Amazon data couldn't be fetched :( ")
 
 if __name__=="__main__":
     print("Welcome to Price Tracker")
     while True:
         now = datetime.now()
         time = now.strftime("%I:%M")
-        if(time=="12:00" or time=="06:00"):
+        if(time>="08:00" or time=="06:00"):
             flipkart()
             amazon()
