@@ -73,6 +73,6 @@ if __name__=="__main__":
     while True:
         now = datetime.now()
         time = now.strftime("%I:%M")
-        if(time>="08:00" or time=="06:00"):
+        if(time=="12:00" or time=="06:00"):
             flipkart()
             amazon()
