@@ -25,6 +25,8 @@ def flipkart():
     htmlContent = req.content
     soup = BeautifulSoup(htmlContent, 'html.parser')
     new_flipkart_price = (soup.find("div", class_="_30jeq3 _16Jk6d")).get_text()
+    print("Old Flipkart Price : ",flipkart_price)
+    print("New Flipkart Price = ",new_flipkart_price)
     if(flipkart_price==0):
         flipkart_price=new_flipkart_price
     elif(flipkart_price!=new_flipkart_price):
@@ -37,7 +39,8 @@ def amazon():
     htmlContent = req.content
     soup = BeautifulSoup(htmlContent, 'html.parser')
     new_amazon_price = (soup.find("span", class_="a-offscreen")).get_text()
-
+    print("Old Amazon Price = ",amazon_price)
+    print("New Amazon Price = ",new_amazon_price)
     if(amazon_price==0):
         amazon_price=new_amazon_price
 
