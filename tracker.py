@@ -35,7 +35,6 @@ def flipkart():
         else:
             print("Same price")
     else:
-        print(type(new_flipkart_price),new_flipkart_price)
         f = open('flipkart_price.txt', 'w')
         f.write(str(new_flipkart_price))
         f.close()
@@ -73,6 +72,8 @@ if __name__=="__main__":
     while True:
         now = datetime.now()
         time = now.strftime("%I:%M")
+        time.sleep(10)
+        print(time)
         if(time=="12:00" or time=="06:00"):
             flipkart()
             amazon()
