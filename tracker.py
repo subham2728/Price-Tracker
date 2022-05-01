@@ -62,7 +62,7 @@ def amazon():
                 print("Same price")
         else:
             f = open('amazon_price.txt', 'w')
-            f.write(str(new_flipkart_price))
+            f.write(str(new_amazon_price))
             f.close()
     except:
         print("Amazon data couldn't be fetched :( ")
